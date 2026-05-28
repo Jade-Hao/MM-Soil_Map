@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hawai‘i Soil Series Map</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f4f8;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    #sidebar {
+      width: 30%;
+      height: 100vh;
+      background-color: #ffffff;
+      border-right: 1px solid #ccc;
+      padding: 20px;
+      box-sizing: border-box;
+      position: absolute;
+      left: 0;
+      top: 0;
+      overflow-y: auto;
+      box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+    }
+
+    #map {
+      width: 70%;
+      height: 100vh;
+      position: absolute;
+      left: 30%;
+      top: 0;
+      box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+    }
+
+    #dropdown {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      margin-top: 0;
+      color: #2c3e50;
+    }
+
+    .info-button {
+      background-color: #f0f0f0;
+      border: none;
+      border-left: 4px solid #0077cc;
+      border-radius: 6px;
+      padding: 12px 20px;
+      margin-bottom: 10px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .info-button:hover {
+      background-color: #d9eaf7;
+      color: #004080;
+    }
+
+    .tab-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out, padding 0.3s ease;
+      background-color: #fdfdfd;
+      border: 1px solid #ddd;
+      padding: 0 15px;
+      margin-top: 10px;
+      border-radius: 10px;
+      box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.05);
+      font-size: 0.95rem;
+    }
+
+    .tab-content.open {
+      max-height: 500px;
+      padding: 15px;
+    }
+
+    @media (max-width: 768px) {
+      #sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        border-right: none;
+      }
+
+      #map {
+        width: 100%;
+        height: 60vh;
+        position: relative;
+        left: 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <h1>Hawai‘i Soil Series Map</h1>
+    <select id="dropdown">
+      <option value="all">Show All Layers</option>
+    </select>
+
+    <div id="default-info">
+      <div class="info-button" data-tab="mission">Welcome + Mission</div>
+      <div class="tab-content" id="mission">
+        <h3>Aloha! Welcome to Makali‘i Metrics Interactive Soil Map!</h3>
+        Makaliʻi Metrics LLC, founded in June 2022 in Honolulu, Hawaiʻi, was built upon the legacy of bio-centric sciences rooted in Hawaiian ancestral practices. Our mission centers on learning from the practices of aloha ʻāina—the commitment to land stewardship and regeneration—by merging these ancient principles with modern agricultural analyses. Recognizing the critical need to support local producers, our company was established to address Hawaiʻi’s unique environmental challenges, such as soil depletion, high dependence on imported food, and need for culturally-informed soil analysis resources. We aim to empower ʻāina practitioners across Hawaiʻi with tools and data to foster climate resilience and strengthen food system security, thus advancing a vision of sustainability grounded in Hawaiian heritage and modern science.
+      </div>
+
+      <div class="info-button" data-tab="controller">What is Soil Series Controller?</div>
+      <div class="tab-content" id="controller">Info about soil series controller.</div>
+
+      <div class="info-button" data-tab="order">What is a Soil Order/Series?</div>
+      <div class="tab-content" id="order">
+        A Soil Order is a broad classification that groups soils based on their <u>characteristics</u> like <strong>texture, color, and how they form</strong>. A Soil Series is a more specific classification within that order, describing the soil's exact properties in a particular area. So, an Order is a big category, and a Series is a more detailed description of the soil in a certain place.
+      </div>
+
+      <div class="info-button" data-tab="moolelo">How do we think about Mo‘olelo and Soil?</div>
+      <div class="tab-content" id="moolelo">He ʻōpū lepo ko ka mahiʻai — A farmer has a dirty stomach.</div>
+
+      <div class="info-button" data-tab="ahupuaa">Ahupuaʻa System / How it works</div>
+      <div class="tab-content" id="ahupuaa">
+        An ahupuaʻa is a traditional Hawaiian land management system that divides land into wedge-shaped sections running from the mountains to the sea. This system ensures that each ahupuaʻa contains a variety of resources, enabling communities to be self-sufficient. It fosters a strong sense of community and responsibility for resource management.
+      </div>
+
+      <div id="soil-series-buttons"></div>
+      <div id="soil-series-content"></div>
+    </div>
+  </div>
+
+  <!-- Map -->
+  <div id="map"></div>
+
+  <!-- Your JS File -->
+  <script src="script.js"></script>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.info-button').forEach(button => {
+      button.addEventListener('click', () => {
+        const tab = button.getAttribute('data-tab');
+        const content = document.getElementById(tab);
+        content.classList.toggle('open');
+      });
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Minimal Dropdown Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        select { width: 200px; }
+    </style>
+</head>
+<body>
+    <h1>Dropdown Test</h1>
+    <select id="test-dropdown">
+        <option value="all">Show All Layers</option>
+    </select>
+
+    <script>
+        // Test data
+        const soilInfo = {
+            Inceptisols: { controller: "Info" },
+            Oxisols: { controller: "Info" },
+            Ultisols: { controller: "Info" },
+            Mollisols: { controller: "Info" },
+            Vertisols: { controller: "Info" },
+            Entisols: { controller: "Info" },
+            Spodosols: { controller: "Info" },
+            Aridisols: { controller: "Info" },
+            Histosols: { controller: "Info" },
+            Andisols: { controller: "Info" },
+            Unclassified: { controller: "Info" }
+        };
+
+        // Function to populate dropdown
+        function populateDropdown() {
+            console.log('Populating dropdown');
+            const dropdown = document.getElementById('test-dropdown');
+            if (!dropdown) {
+                console.error('Dropdown not found');
+                return;
+            }
+
+            // Clear existing options
+            dropdown.innerHTML = '<option value="all">Show All Layers</option>';
+
+            // Add soil types
+            const soilTypes = Object.keys(soilInfo).sort();
+            console.log('Available soil types:', soilTypes);
+
+            // Add options using template literal
+            const options = soilTypes.map(soilType => 
+                `<option value="${soilType}">${soilType}</option>`
+            ).join('');
+
+            // Add options
+            dropdown.innerHTML += options;
+            console.log('Added options to dropdown');
+
+            // Verify options
+            const optionsList = dropdown.querySelectorAll('option');
+            console.log('Total options:', optionsList.length);
+            optionsList.forEach(opt => {
+                console.log(`Option value: ${opt.value}, text: ${opt.textContent}`);
+            });
+        }
+
+        // Wait for DOM to be ready
+        console.log('Starting test');
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded, populating dropdown');
+            populateDropdown();
+        });
+
+        // Also try after a short delay
+        setTimeout(() => {
+            console.log('Populating dropdown after delay');
+            populateDropdown();
+        }, 1000);
+    </script>
+</body>
+</html>

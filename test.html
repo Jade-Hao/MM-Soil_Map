@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <title>Hawai'i Soil Series Map</title>
+  <link rel="icon" type="image/png" href="makaliilogo.png">
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+
+  <!-- Leaflet JS -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
+  <style>
+  body {
+  margin: 0;
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  font-family: Poppins, sans-serif;
+}
+
+/* Desktop layout */
+#sidebar {
+  flex: 0 0 30%;
+  background: #f4f4f4;
+  overflow-y: auto;
+  padding: 20px;
+  box-sizing: border-box;
+  border-right: 1px solid #ccc;
+}
+
+#map {
+  flex: 1;
+  height: 200vh;
+}
+
+.sidebar-logo,
+#soil-series-content img {
+  max-width: 10%;
+  height: auto;
+}
+/* Tablet view */
+@media (max-width: 1024px) {
+  #sidebar {
+    flex: 0 0 40%;
+  }
+}
+
+/* Phone */
+@media (max-width: 768px) {
+  body {
+    flex-direction: column;
+  }
+  
+  #sidebar {
+    flex: none;
+    width: 100%;
+    max-height: 40vh; /* Limit sidebar height */
+    overflow-y: auto; /* Scroll if content is long */
+    border-right: none;
+    border-bottom: 1px solid #ccc;
+  }
+  
+  #map {
+    width: 100%;
+    height: 60vh; /* Map takes majority of the screen */
+  }
+}
+
+/* Extra small phones */
+    @media (max-width: 480px) {
+      #sidebar {
+        max-height: 35vh;
+      }
+      #map {
+        height: 65vh; /* Space for the map */
+      }
+    }
+
+    }
+
+    h2 {
+      margin-top: 0;
+    }
+
+    .info-button {
+      background: white;
+      border: 2px solid #333;
+      border-radius: 10px;
+      padding: 15px;
+      margin: 10px 0;
+      font-weight: bold;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.3s ease;
+      text-align: center;
+    }
+    .info-button:hover {
+/*      background-color: #eaeaea; */
+      background-color:  #c2b59b;
+    }
+
+    .tab-content {
+      display: none;
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      margin: 0 0 10px 0;
+    }
+
+    .tab-content.open {
+      display: block;
+    }
+
+    #soil-series-buttons .info-button {
+      margin-bottom: 8px;
+    }
+
+    .sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+    select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 10px;
+      font-size: 16px;
+      margin-bottom: 15px;
+    }
+
+    label {
+      font-weight: bold;
+    }
+
+  </style>
+</head>
+<body>
+  <div id="sidebar"><!-- 
+    <h2>Hawai'i Soil Map</h2>
+ -->
+ <div class="sidebar-header">
+  <img src="makaliilogo.png" alt="Logo" class="sidebar-logo" />
+  <h2>Hawaiʻi Soil Map</h2>
+</div>
+  
+  <label for="dropdown">Select Soil Order:</label>
+<select id="dropdown">
+  <option value="all">Show All Soil Orders</option>
+</select>
+
+    <div id="default-info">
+      <div class="info-button" data-tab="mission">
+        Welcome + Mission
+      </div>
+      <div id="mission" class="tab-content">
+        <p>
+          Makaliʻi Metrics LLC, founded in June 2022 in Honolulu, Hawaiʻi,
+          was built upon the legacy of bio-centric sciences rooted in Hawaiian
+          ancestral practices. </p>
+          <p>Our mission centers on learning from the
+          practices of aloha ʻāina—the commitment to land stewardship and
+          regeneration—by merging these ancient principles with modern
+          agricultural analyses.</p>
+          <p>Recognizing the critical need to support
+          local producers, our company was established to address Hawaiʻi’s
+          unique environmental challenges, such as soil depletion, high
+          dependence on imported food, and need for culturally-informed soil
+          analysis resources. </p>
+          <p>We aim to empower ʻāina practitioners across
+          Hawaiʻi with tools and data to foster climate resilience and
+          strengthen food system security, thus advancing a vision of
+          sustainability grounded in Hawaiian heritage and modern science.
+        </p>
+      </div>
+
+      <div class="info-button" data-tab="controller">
+        What is a Soil Series Controller?
+      </div>
+      <div id="controller" class="tab-content">
+        <p>
+          <strong>Soil Series Controllers</strong> define spatial boundaries and logic behind
+          soil mapping. They help determine where different soil types appear
+          and transition.
+        </p>
+      </div>
+
+      <div class="info-button" data-tab="order">
+        What is a Soil Order / Series?
+      </div>
+      <div id="order" class="tab-content">
+        <p>
+          <stong>Soil Orders </stong> are broad categories of soils based on characteristics
+          like texture and formation. Soil Series are more specific,
+          identifying soils in distinct local conditions.
+        </p>
+      </div>
+
+      <div class="info-button" data-tab="moolelo">
+        How do we think about Moʻolelo and Soil?
+      </div>
+      <div id="moolelo" class="tab-content">
+        <p>
+          He ʻōpū lepo ko ka mahiʻai – a farmer has a dirty stomach. This ʻōlelo
+          noʻeau reminds us of the deep connection between stories, land, and
+          labor.
+        </p>
+      </div>
+
+      <div class="info-button" data-tab="ahupuaa">
+        What is an Ahupuaʻa System?
+      </div>
+      <div id="ahupuaa" class="tab-content">
+        <p>
+          An ahupuaʻa is a traditional Hawaiian land division system that
+          extends from the mountains to the sea, ensuring access to all
+          necessary resources.
+        </p>
+      </div>
+    </div>
+
+    <hr />
+
+    <div id="soil-series-buttons"></div>
+    <div id="soil-series-content"></div>
+  </div>
+
+  <div id="map"></div>
+
+  <script>
+    // Initialize Leaflet map with Esri imagery
+    const map = L.map('map').setView([20.8247, -156.919409], 8);
+    L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      {
+        attribution:
+          'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+      }
+    ).addTo(map);
+
+    // Create panes for layering
+    map.createPane('ahupuaaPane');
+    map.getPane('ahupuaaPane').style.zIndex = 500;
+
+    map.createPane('seriesPane');
+    map.getPane('seriesPane').style.zIndex = 450;
+
+    // URLs for soil JSONs
+    const urls = [
+      'https://lepolad.github.io/interactive-soil-map/poly_files/lanai_soil_combined.json',
+      'https://lepolad.github.io/interactive-soil-map/poly_files/oahu_soil_combined.json',
+      'https://lepolad.github.io/interactive-soil-map/poly_files/molokai_soil_combined.json',
+      'https://lepolad.github.io/interactive-soil-map/poly_files/maui_soil_combined.json',
+      'https://lepolad.github.io/interactive-soil-map/poly_files/kauai_soil_combined.json',
+      'https://lepolad.github.io/interactive-soil-map/poly_files/hawaii_soil_combined.json',
+      'https://lepolad.github.io/interactive-soil-map/poly_files/kahoolawe_soil_combined.json',
+    ];
+
+    const groupProperty = 'order';
+    const groupedLayers = {};
+
+    // Soil info dictionary
+    const soilInfo = {
+      Inceptisols: {
+        controller: 'Controller Information - NEED TO GET',
+        information:
+          'They’re often found in hilly areas, river valleys, or places where soil gets washed away or built up regularly. <strong>These soils can be fairly good for farming and grazing</strong>, though they may need some care to stay healthy. They’re like “teenage soils” — past the very raw stage but not yet fully mature.',
+        moolelo: 'N/A',
+        view: 'images/Inceptisols.png'
+      },
+      Oxisols: {
+        controller: 'Controller Information - NEED TO GET',
+        information:
+          'Oxisols are very old, heavily weathered soils found mostly in tropical regions. They’re <strong>low in natural nutrients </strong> because rain has washed many minerals away over time. They often have a reddish color and need careful management and fertilizer to grow crops well.',
+        moolelo: 'N/A',
+         view: 'images/Oxisols.png'
+      },
+      Ultisols: {
+        controller: 'Controller Information - NEED TO GET',
+        information:
+          'Ultisols are <u>old soils</u> that have lost a lot of their natural fertility through weathering and rain. They’re common in warm, humid areas and often have a reddish or yellowish color. With added lime and fertilizer, they can still produce good crops.',
+        moolelo: 'N/A',
+         view: 'images/Ultisols.png'
+      },
+      Mollisols: {
+        controller: 'Controller Information - NEED TO GET',
+        information:
+          ' Mollisols are some of the <strong>best farming soils in the world.</strong> They’re rich in organic matter, dark in color, and very fertile. Found mainly in grassland areas, they hold moisture well and are great for growing grains and other crops.',
+        moolelo: 'N/A',
+         view: 'images/Mollisols.png'
+      },
+      Vertisols: {
+        controller: 'Controller Information - NEED TO GET',
+        information:
+          'Vertisols are clay-rich soils that crack wide when dry and swell when wet. <u>They can be very fertile but are tricky to work with because they change so much with moisture.</u> Timing is important for planting and tilling them.',
+        moolelo: 'N/A',
+        view: 'images/Vertisols.png'
+      },
+      Entisols: {
+        controller: 'Controller Information - NEED TO GET',
+        information:
+          'Entisols are very young soils with little to no layer development. They’re often found in floodplains, dunes, or steep slopes where soil is constantly moving or forming. Their farming potential depends on location and management.',
+        moolelo: 'N/A',
+        view: 'images/Entisols.png'
+      },
+      Spodosols: {
+        controller: 'Controller Information - NEED TO GET',
+        information:
+          'Formed from weathering processes that strip organic water combined with aluminum from the surface layer',
+        moolelo: 'N/A',
+        view: 'images/Spodosols.png'
+      },
+      Aridisols: {
+        controller: 'Controller Information - NEED TO GET',
+        information:
+          'Spodosols are acidic soils found in cool, wet areas, often under conifer forests. They have a light, sandy top layer and a darker, organic-rich layer below. They’re generally low in nutrients and need amendments for farming. It’s too dry for most plants to grow without irrigation. Erosion is more common since it lacks vegetation and has limited organic matter',
+        moolelo: 'N/A',
+        view: 'images/Aridisols.png'
+      },
+      Histosols: {
+        controller: 'Controller Information - NEED TO GET',
+        information:
+          ' Histosols are made mostly of organic matter like peat or muck, forming in wet places like bogs or swamps. They’re very rich but can be challenging to farm because they need drainage and careful handling. High content of organic matter and very little permafrost.',
+        moolelo: 'N/A',
+        view: 'images/Histosols.png'
+      },
+      Andisols: {
+        controller: 'Controller Information - NEED TO GET',
+        information:
+          'Andisols form from volcanic ash and are usually rich, dark, and fluffy. They hold nutrients and water well, making them excellent for crops if managed properly. They’re often found in volcanic regions.',
+        moolelo:
+          'Considered sacred — born of Pele — Andisols connect directly to fire-born land creation.',
+        view: 'images/Andisols.png'
+      },
+      Unclassified: {
+        controller: 'Controller Information',
+        information:
+          'Unclassified soils are not fully surveyed or categorized, often area is either is urban land or lava flows.',
+        moolelo: 'N/A',
+      },
+    };
+
+    // Helper function to get color for soil order
+    function getColor(order) {
+      switch (order) {
+        case 'Inceptisols':
+          return 'blue';
+        case 'Oxisols':
+          return 'red';
+        case 'Ultisols':
+          return 'purple';
+        case 'Mollisols':
+          return '#E0218A';
+        case 'Vertisols':
+          return 'orange';
+        case 'Entisols':
+          return '#e0da21';
+        case 'Spodosols':
+          return 'cyan';
+        case 'Aridisols':
+          return 'brown';
+        case 'Histosols':
+          return 'greenyellow';
+        case 'Andisols':
+          return 'darkslateblue';
+        case 'Undefined':
+          return 'white';
+        default:
+          return 'white';
+      }
+    }
+
+    // Fetch and group polygons by property (soil order)
+    async function getAndGroupData(url, property) {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Failed to load ${url}: ${response.status}`);
+        }
+        const data = await response.json();
+
+        data.features.forEach((feature) => {
+          const groupName = feature.properties[property];
+          if (!groupedLayers[groupName]) {
+            groupedLayers[groupName] = L.featureGroup();
+          }
+          if (
+            typeof feature === 'object' &&
+            feature !== null &&
+            feature.type === 'Feature' &&
+            feature.geometry
+          ) {
+            try {
+              const polygon = L.geoJSON(feature, {
+                style: (feature) => {
+                  const prop = feature.properties[property];
+                  return {
+                    fillColor: getColor(prop),
+                    color: getColor(prop),
+                    weight: 1,
+                    fillOpacity: 0.5,
+                  };
+                },
+                pane: 'seriesPane',
+              });
+              polygon.bindPopup(feature.properties['series']);
+              polygon.addTo(groupedLayers[groupName]);
+            } catch (error) {
+              console.error('Error creating polygon:', error);
+            }
+          }
+        });
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    }
+
+    // Initialize all layers from JSON URLs
+    async function initializeLayers(urls, property) {
+      for (const url of urls) {
+        await getAndGroupData(url, property);
+      }
+      // Add all grouped layers to map by default
+      for (const groupName in groupedLayers) {
+        groupedLayers[groupName].addTo(map);
+      }
+    }
+
+    // Handle dropdown layer selection
+    function handleLayerChange(event) {
+      const selectedGroup = event.target.value;
+
+      // Remove all grouped layers
+      for (const groupName in groupedLayers) {
+        map.removeLayer(groupedLayers[groupName]);
+      }
+
+      if (selectedGroup !== 'all' && groupedLayers[selectedGroup]) {
+        groupedLayers[selectedGroup].addTo(map);
+      } else {
+        // Show all if 'all' selected
+        for (const groupName in groupedLayers) {
+          groupedLayers[groupName].addTo(map);
+        }
+      }
+
+      // UI updates in sidebar
+      const buttonContainer = document.getElementById('soil-series-buttons');
+      const contentContainer = document.getElementById('soil-series-content');
+      const defaultInfo = document.getElementById('default-info');
+
+      buttonContainer.innerHTML = '';
+      contentContainer.innerHTML = '';
+
+      if (selectedGroup !== 'all' && soilInfo[selectedGroup]) {
+        defaultInfo.style.display = 'none';
+
+        const info = soilInfo[selectedGroup];
+        const buttons = [
+          { id: 'controller', label: 'Soil Series Controller', content: info.controller },
+          { id: 'information', label: 'Soil Series Information', content: info.information },
+          { id: 'moolelo', label: 'Moʻolelo', content: info.moolelo }
+        ];
+
+        if (info.view) {
+          buttons.push({
+            id: 'view',
+            label: 'View',
+            content: `
+              <img src="${info.view}" alt="${selectedGroup} image" style="max-width:100%;border-radius:10px;">
+              <p style="font-size: 0.85em; color: #555; margin-top: 5px;">
+                Images from Natural Resources Conservation Service – U.S. Department of Agriculture
+              </p>
+            `
+          });
+        }
+
+
+        buttons.forEach((btn) => {
+          const btnEl = document.createElement('div');
+          btnEl.className = 'info-button';
+          btnEl.textContent = btn.label;
+
+          const contentEl = document.createElement('div');
+          contentEl.className = 'tab-content';
+          contentEl.innerHTML = `<p>${btn.content}</p>`;
+   
+
+      btnEl.addEventListener('click', () => {
+        contentEl.classList.toggle('open');
+      });
+
+
+        buttonContainer.appendChild(btnEl);
+        buttonContainer.appendChild(contentEl);
+
+        });
+      } else {
+        defaultInfo.style.display = 'block';
+      }
+    }
+
+    // Add event listeners after DOM loads
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Initialize layers and dropdown
+      await initializeLayers(urls, groupProperty);
+
+      // Populate dropdown options from groupedLayers keys
+      const dropdown = document.getElementById('dropdown');
+      for (const groupName in groupedLayers) {
+        const option = document.createElement('option');
+        option.value = groupName;
+        option.textContent = groupName;
+        dropdown.appendChild(option);
+      }
+      dropdown.addEventListener('change', handleLayerChange);
+
+      // Toggle info sections on homepage
+      document.querySelectorAll('#default-info .info-button').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const target = btn.getAttribute('data-tab');
+          const tab = document.getElementById(target);
+          if (tab.classList.contains('open')) {
+            tab.classList.remove('open');
+          } else {
+            tab.classList.add('open');
+          }
+        });
+      });
+    });
+
+    // Add Ahupua'a polygons (non-interactive, top pane)
+    async function addAhupuaa() {
+      const url =
+        'https://geodata.hawaii.gov/arcgis/rest/services/HistoricCultural/MapServer/1/query?outFields=*&where=1%3D1&f=geojson';
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error('Failed to load Ahupua‘a layer');
+        }
+        const data = await response.json();
+
+        data.features.forEach((feature) => {
+          if (
+            feature &&
+            feature.type === 'Feature' &&
+            feature.geometry
+          ) {
+            try {
+              const polygon = L.geoJSON(feature, {
+                style: { color: 'black', weight: 1, fill: false },
+                pane: 'ahupuaaPane',
+                interactive: false,
+              });
+              polygon.addTo(map);
+            } catch (error) {
+              console.error('Error adding Ahupua‘a polygon', error);
+            }
+          }
+        });
+      } catch (error) {
+        console.error('Error fetching Ahupua‘a data', error);
+      }
+    }
+
+    // Add Ahupua'a layer once map is ready
+    addAhupuaa();
+  </script>
+</body>
+</html>
